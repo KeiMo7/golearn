@@ -1,0 +1,162 @@
+$ go test ./pipeline/ -count=1 -v
+=== RUN   TestMeanImputer
+
+  Given a data set with missing values in a numeric column ✔✔
+    Missing values are filled with the training mean ✔✔✔
+    Complete columns and the class column pass through unchanged ✔✔✔✔
+    Row count is preserved ✔
+
+
+10 total assertions
+
+
+  Given a numeric column that is entirely missing ✔✔
+    It degrades to a documented 0.0 fill, recorded in AllMissingCols, without producing NaN ✔✔✔
+
+
+15 total assertions
+
+--- PASS: TestMeanImputer (0.00s)
+=== RUN   TestStandardScaler
+
+  Given a numeric data set ✔✔
+    Columns are standardised to zero mean and unit variance ✔✔✔✔✔
+    InverseTransform restores the original scale within tolerance ✔✔✔✔✔✔✔
+
+
+29 total assertions
+
+--- PASS: TestStandardScaler (0.00s)
+=== RUN   TestMinMaxScaler
+
+  Given a numeric data set ✔✔
+    Columns are scaled into [0, 1] ✔✔✔
+    InverseTransform restores the original scale within tolerance ✔✔✔✔
+
+
+38 total assertions
+
+--- PASS: TestMinMaxScaler (0.00s)
+=== RUN   TestZeroVarianceColumns
+
+  Given a constant numeric column 
+    StandardScaler maps it to 0.0 without NaN/Inf and inverts back to the mean ✔✔✔✔✔✔✔
+    MinMaxScaler maps it to 0.0 without NaN/Inf and inverts back to the minimum ✔✔✔✔✔✔
+
+
+51 total assertions
+
+--- PASS: TestZeroVarianceColumns (0.00s)
+=== RUN   TestOneHotEncoder
+
+  Given a mixed data set with a categorical column ✔✔
+    The vocabulary is fixed at fit time (sorted) and expanded into indicator columns ✔✔✔✔✔✔✔
+    Numeric columns and the class column pass through; rows are preserved ✔✔✔✔✔✔
+    Unseen categories at prediction time produce all-zero rows and are counted, not errors ✔✔✔✔✔✔✔
+    InverseTransform is explicitly not supported ✔
+
+
+74 total assertions
+
+
+  Given a categorical column whose generated names collide with existing columns ✔
+    The naming rule is stable and predictable: a numeric suffix is appended ✔✔✔
+
+
+78 total assertions
+
+
+  Given a categorical column with an empty vocabulary ✔
+    Fit fails explicitly instead of producing a degenerate table ✔✔
+
+
+81 total assertions
+
+--- PASS: TestOneHotEncoder (0.00s)
+=== RUN   TestPipelineChaining
+
+  Given a mixed data set with missing values 
+    A pipeline applies imputation, scaling and encoding in declaration order ✔✔✔✔✔✔✔✔
+    The declared order is honoured, never reordered internally ✔✔✔✔✔✔✔✔✔
+
+
+98 total assertions
+
+--- PASS: TestPipelineChaining (0.00s)
+=== RUN   TestFailureModes
+
+  Given unfitted transformers 
+    Transform returns ErrNotFitted ✔✔✔✔
+    Pipeline.Transform and InverseTransform return ErrNotFitted ✔✔
+
+
+104 total assertions
+
+
+  Given a fitted transformer and a table with mismatched dimensions ✔
+    Transform fails with an identifiable, descriptive error ✔✔✔✔✔✔
+
+
+111 total assertions
+
+
+  Inverse transformation of non-invertible stages fails explicitly ✔✔✔✔
+
+
+115 total assertions
+
+--- PASS: TestFailureModes (0.00s)
+=== RUN   TestSerialization
+
+  Given a fitted pipeline on mixed data ✔✔
+    A save/load round trip produces value-identical output ✔✔✔✔✔✔
+    Saving an unfitted pipeline fails ✔✔✔
+    A version mismatch is rejected with a descriptive error ✔✔✔✔✔✔
+    An unknown stage type is rejected ✔✔
+
+
+134 total assertions
+
+--- PASS: TestSerialization (0.00s)
+=== RUN   TestCrossProcessRestore
+
+  Given a pipeline fitted in this process ✔✔✔✔✔
+    Restoring it in another process yields byte-identical values ✔✔
+
+
+141 total assertions
+
+--- PASS: TestCrossProcessRestore (0.00s)
+=== RUN   TestNoLeakage
+
+  Given a data set whose validation rows have wildly different statistics 
+    Statistics fitted on the training fold differ from whole-data statistics ✔✔✔✔
+    Changing validation-fold data does not change the fitted state ✔✔✔✔✔
+    The vocabulary is fixed by the training fold; validation-only values are reported as unseen ✔✔✔✔
+
+
+154 total assertions
+
+--- PASS: TestNoLeakage (0.00s)
+=== RUN   TestIntegrationWithModelsAndCV
+
+  Given a labelled mixed data set 
+    A transformed data set can be consumed by an existing classifier and evaluation metric ✔✔✔✔✔
+    CrossValidate re-fits the pipeline per fold and returns one confusion matrix per fold ✔✔✔
+
+
+162 total assertions
+
+--- PASS: TestIntegrationWithModelsAndCV (0.00s)
+PASS
+ok  	github.com/sjwhitworth/golearn/pipeline	0.011s
+
+$ go test ./base ./filters -count=1  (现有行为回归)
+ok  	github.com/sjwhitworth/golearn/base	0.406s
+ok  	github.com/sjwhitworth/golearn/filters	0.010s
+
+$ go vet ./pipeline/
+(no findings)
+
+$ gofmt -l pipeline/
+(no output = all formatted)
